@@ -1,0 +1,5 @@
+fast-alpr[onnx]
+opencv-python
+streamlit
+pandas
+ultralytics
