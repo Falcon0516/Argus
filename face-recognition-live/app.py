@@ -1,6 +1,7 @@
 """
 Streamlit dashboard: drop reference photos of one or more people, then find each
-of them live in your webcam feed. CPU-only inference via InsightFace + ONNX Runtime.
+of them live in your webcam feed or an IP/RTSP camera stream.
+CPU-only inference via InsightFace + ONNX Runtime.
 
 Run:
     streamlit run app.py
@@ -104,7 +105,7 @@ shared: SharedState = st.session_state.shared
 
 
 # --------------------------------------------------------------------------
-# Video processing callback (runs on a background thread)
+# Video processing callback (runs on a background thread) — used by webrtc
 # --------------------------------------------------------------------------
 
 class FaceMatchProcessor:
@@ -170,15 +171,77 @@ class FaceMatchProcessor:
 
 
 # --------------------------------------------------------------------------
+# Face inference helper (shared by both webcam and IP-cam modes)
+# --------------------------------------------------------------------------
+
+def process_frame_for_faces(img: np.ndarray, face_app, ref_db: dict,
+                             threshold: float, frame_width: int) -> np.ndarray:
+    """Run face detection + matching on a single BGR frame and return annotated copy."""
+    labels = list(ref_db.keys())
+    h, w = img.shape[:2]
+    if w > frame_width:
+        scale = frame_width / w
+        img = cv2.resize(img, (frame_width, int(h * scale)))
+
+    if face_app is not None and ref_db:
+        faces = face_app.get(img)
+        for face in faces:
+            best_label, best_sim = None, -1.0
+            for label, emb in ref_db.items():
+                sim = cosine_similarity(emb, face.normed_embedding)
+                if sim > best_sim:
+                    best_label, best_sim = label, sim
+            is_match = best_sim >= threshold
+            bbox = face.bbox.astype(int)
+            x1, y1, x2, y2 = bbox
+            if is_match:
+                color = color_for_label(best_label, labels)
+                label_text = f"{best_label} {best_sim:.2f}"
+            else:
+                color = (0, 0, 220)
+                label_text = f"Unknown {best_sim:.2f}"
+            cv2.rectangle(img, (x1, y1), (x2, y2), color, 2)
+            cv2.putText(img, label_text, (x1, max(y1 - 10, 15)),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.55, color, 2)
+    elif face_app is not None:
+        cv2.putText(img, "Upload at least one reference photo to start matching", (10, 30),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 165, 255), 2)
+    return img
+
+
+# --------------------------------------------------------------------------
 # UI
 # --------------------------------------------------------------------------
 
 st.set_page_config(page_title="Live Face Match", page_icon="🔍", layout="wide")
 st.title("🔍 Live Face Match")
-st.caption("Drop photos of one or more people, then find each of them live in your webcam feed. Runs 100% on CPU, nothing leaves your machine.")
+st.caption("Drop photos of one or more people, then find each of them live in your webcam or IP camera feed. Runs 100% on CPU, nothing leaves your machine.")
 
 with st.sidebar:
     st.header("Settings")
+
+    # ── Video source ──────────────────────────────────────────────────────
+    st.subheader("📹 Video Source")
+    source_mode = st.radio(
+        "Source type",
+        options=["Webcam (WebRTC)", "IP / RTSP Camera"],
+        index=0,
+        horizontal=False,
+        help="WebRTC streams directly from your browser. IP/RTSP connects to a network camera via OpenCV.",
+    )
+
+    if source_mode == "IP / RTSP Camera":
+        stream_url = st.text_input(
+            "Stream URL",
+            value="",
+            placeholder="rtsp://user:pass@192.168.1.10:554/stream  or  http://ip:port/video",
+        )
+        ip_run = st.toggle("▶️ Start IP stream", value=False, key="ip_run")
+
+    st.divider()
+
+    # ── Model settings ────────────────────────────────────────────────────
+    st.subheader("⚙️ Model Settings")
     model_pack = st.selectbox(
         "Model pack",
         options=["buffalo_sc", "buffalo_s", "buffalo_l"],
@@ -199,7 +262,7 @@ with st.sidebar:
     )
     threshold = st.slider(
         "Match threshold (cosine similarity)", min_value=0.20, max_value=0.80, value=0.55, step=0.01,
-        help="Raise if you get false positives, lower if real matches are missed. Applies to everyone in the gallery.",
+        help="Raise if you get false positives, lower if real matches are missed.",
     )
 
     st.divider()
@@ -279,7 +342,7 @@ with col1:
             if not info["error"] and info["embedding"] is not None:
                 ref_db[info["label"]] = info["embedding"]
 
-        # Warn about duplicate names (last one wins in the dict, so flag it).
+        # Warn about duplicate names.
         labels_list = [info["label"] for info in st.session_state.ref_people.values() if not info["error"]]
         dupes = {l for l in labels_list if labels_list.count(l) > 1}
         if dupes:
@@ -296,21 +359,90 @@ with col1:
         shared.update(ref_db={})
         ref_status.info("Upload one or more photos to start matching against the live feed.")
 
-with col2:
-    st.subheader("2. Live webcam feed")
-    ctx = webrtc_streamer(
-        key="face-match",
-        mode=WebRtcMode.SENDRECV,
-        rtc_configuration=RTCConfiguration({"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}),
-        video_processor_factory=lambda: FaceMatchProcessor(shared),
-        media_stream_constraints={"video": True, "audio": False},
-        async_processing=True,
-    )
+# --------------------------------------------------------------------------
+# Right column — live feed (Webcam via WebRTC  OR  IP/RTSP via OpenCV loop)
+# --------------------------------------------------------------------------
 
-    if ctx.state.playing:
-        fps_placeholder.metric("Live FPS", f"{shared.read_fps():.1f}")
+with col2:
+    if source_mode == "Webcam (WebRTC)":
+        st.subheader("2. Live webcam feed")
+        ctx = webrtc_streamer(
+            key="face-match",
+            mode=WebRtcMode.SENDRECV,
+            rtc_configuration=RTCConfiguration({"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}),
+            video_processor_factory=lambda: FaceMatchProcessor(shared),
+            media_stream_constraints={"video": True, "audio": False},
+            async_processing=True,
+        )
+
+        if ctx.state.playing:
+            fps_placeholder.metric("Live FPS", f"{shared.read_fps():.1f}")
+        else:
+            fps_placeholder.info("Click START above to begin the webcam feed.")
+
     else:
-        fps_placeholder.info("Click START above to begin the webcam feed.")
+        # ── IP / RTSP Camera mode ──────────────────────────────────────────
+        st.subheader("2. IP / RTSP Camera feed")
+
+        if "ip_cap" not in st.session_state:
+            st.session_state.ip_cap = None
+
+        frame_slot = st.empty()
+        fps_slot   = st.empty()
+
+        def _open_ip_stream(url: str):
+            cap = cv2.VideoCapture(url)
+            if not cap.isOpened():
+                raise RuntimeError(f"Could not open stream: {url}")
+            return cap
+
+        if ip_run:
+            url = stream_url.strip() if "stream_url" in dir() else ""
+            if not url:
+                st.warning("⚠️ Enter a stream URL in the sidebar first.")
+                st.stop()
+
+            if st.session_state.ip_cap is None:
+                try:
+                    st.session_state.ip_cap = _open_ip_stream(url)
+                except RuntimeError as e:
+                    st.error(str(e))
+                    st.stop()
+
+            cap = st.session_state.ip_cap
+            prev_t = time.time()
+            fps_smooth = 0.0
+            frame_idx = 0
+
+            face_app_snap, ref_db_snap, thresh_snap, fw_snap, pe_snap = shared.snapshot()
+
+            while st.session_state.get("ip_run", False):
+                ret, frame = cap.read()
+                if not ret:
+                    st.warning("⚠️ Failed to read frame from stream. Check the URL and network.")
+                    break
+
+                frame_idx += 1
+                if frame_idx % max(pe_snap, 1) == 0:
+                    annotated = process_frame_for_faces(frame.copy(), face_app_snap, ref_db_snap, thresh_snap, fw_snap)
+                    # refresh snapshot every 30 frames so sidebar tweaks take effect
+                    if frame_idx % 30 == 0:
+                        face_app_snap, ref_db_snap, thresh_snap, fw_snap, pe_snap = shared.snapshot()
+
+                now = time.time()
+                fps_smooth = 0.9 * fps_smooth + 0.1 * (1.0 / max(now - prev_t, 1e-6))
+                prev_t = now
+
+                rgb = cv2.cvtColor(annotated, cv2.COLOR_BGR2RGB)
+                frame_slot.image(rgb, channels="RGB", use_container_width=True)
+                fps_slot.caption(f"FPS: {fps_smooth:.1f}")
+                fps_placeholder.metric("Live FPS", f"{fps_smooth:.1f}")
+                time.sleep(0.01)
+        else:
+            if st.session_state.ip_cap is not None:
+                st.session_state.ip_cap.release()
+                st.session_state.ip_cap = None
+            frame_slot.info("Stream stopped. Toggle '▶️ Start IP stream' in the sidebar to begin.")
 
 st.divider()
 with st.expander("Tips"):
@@ -322,12 +454,11 @@ with st.expander("Tips"):
 - **Names**: edit the name field under each thumbnail — it's what shows up as the on-screen label.
   Give everyone a unique name; duplicates will overwrite each other.
 - **Reference photos**: single face, well-lit, front-facing works best for each person.
-- **Threshold**: start at 0.55. Raise it if people get mismatched with each other, lower it if a
-  real match isn't being picked up. The same threshold applies to everyone in the gallery.
+- **Threshold**: start at 0.55. Raise it if people get mismatched, lower it if a real match isn't picked up.
+- **IP / RTSP Camera**: enter the full stream URL (e.g. `rtsp://admin:pass@192.168.1.10:554/stream`
+  or `http://192.168.1.10:8080/video`) and toggle **Start IP stream**. OpenCV reads the stream
+  directly so no browser WebRTC relay is needed.
 - **Speed vs. accuracy**: `buffalo_sc` + smaller detector size + smaller frame width = higher FPS.
-  `buffalo_l` + larger sizes = better accuracy on small/angled faces, but slower on CPU. More
-  people in the gallery adds a small amount of comparison overhead per detected face, but this
-  is negligible compared to detection cost.
 - Everything runs locally in this process — no images or video leave your machine.
         """
     )

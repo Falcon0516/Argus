@@ -305,11 +305,25 @@ def run_alpr_on_frame(alpr: ALPR, frame, min_conf: float = 0.5):
     return annotated_frame, detections
 
 
-def open_camera(index: int):
-    """Open a webcam in a way that works across Windows/Linux/macOS."""
+def open_camera(source):
+    """Open a video source: an integer webcam index *or* an RTSP/HTTP URL string.
+
+    Examples
+    --------
+    open_camera(0)                              # default webcam
+    open_camera("rtsp://192.168.1.10:554/stream")
+    open_camera("http://192.168.1.10:8080/video")
+    """
     import cv2
 
-    cap = cv2.VideoCapture(index, cv2.CAP_ANY)
-    if not cap.isOpened():
-        raise RuntimeError(f"Could not open camera index {index}")
+    if isinstance(source, str):
+        # For network streams, omit CAP_ANY backend so OpenCV auto-selects
+        # the best transport (FFMPEG / GStreamer) for RTSP/HTTP.
+        cap = cv2.VideoCapture(source)
+        if not cap.isOpened():
+            raise RuntimeError(f"Could not open video stream: {source}")
+    else:
+        cap = cv2.VideoCapture(source, cv2.CAP_ANY)
+        if not cap.isOpened():
+            raise RuntimeError(f"Could not open camera index {source}")
     return cap

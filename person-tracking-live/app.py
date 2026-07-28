@@ -1,8 +1,8 @@
 """
 Streamlit dashboard: build a watchlist of named people (each from their own reference
-photo + a manually selected box), then find any of them live in your webcam feed using
-whole-body appearance — a proper person re-ID embedding (OSNet, via BoxMOT) blended
-with a clothing-color histogram and body aspect ratio. CPU-only.
+photo + a manually selected box), then find any of them live in your webcam or IP/RTSP
+camera feed using whole-body appearance — a proper person re-ID embedding (OSNet, via
+BoxMOT) blended with a clothing-color histogram and body aspect ratio. CPU-only.
 
 Run:
     streamlit run app.py
@@ -39,10 +39,6 @@ def load_reid_backend():
     osnet_x0_25_msmt17 is the smallest OSNet variant (trained on MSMT17), auto-downloaded
     by BoxMOT the first time it's used — no gated/manual Google-Drive checkpoint fetching.
     """
-    # Import the lower-level ReID class directly rather than `from boxmot import
-    # ReIDModel` — that top-level import pulls in boxmot.models.detector, which (as of
-    # boxmot 22.0.0) references a `boxmot.data` module missing from the published wheel.
-    # This path avoids that broken chain entirely.
     from boxmot.reid.core.reid import ReID
 
     return ReID(Path("osnet_x0_25_msmt17.pt"), device="cpu", half=False)
@@ -127,7 +123,7 @@ class SharedState:
     def snapshot(self):
         with self.lock:
             return (
-                self.detector, self.reid_backend, self.people,
+                self.detector, self.reid_backend, dict(self.people),
                 self.threshold, self.w_deep, self.w_hist, self.w_ratio,
                 self.det_conf, self.frame_width, self.process_every,
             )
@@ -175,7 +171,7 @@ shared: SharedState = st.session_state.shared
 
 
 # --------------------------------------------------------------------------
-# Video processing callback (runs on a background thread)
+# Video processing callback (runs on a background thread) — used by webrtc
 # --------------------------------------------------------------------------
 
 class PersonMatchProcessor:
@@ -216,8 +212,6 @@ class PersonMatchProcessor:
                 new_results = []
                 if clean_boxes:
                     boxes_arr = np.array(clean_boxes, dtype=np.float32)
-                    # One batched OSNet forward pass for every detected person this frame,
-                    # then each is compared against every name in the watchlist.
                     deep_feats = extract_deep_features(reid_backend, img, boxes_arr)
                     for (x1, y1, x2, y2), cur_deep in zip(clean_boxes, deep_feats):
                         crop = img[y1:y2, x1:x2]
@@ -257,6 +251,59 @@ class PersonMatchProcessor:
 
 
 # --------------------------------------------------------------------------
+# Person inference helper (shared by both webcam and IP-cam modes)
+# --------------------------------------------------------------------------
+
+def process_frame_for_persons(img: np.ndarray, detector, reid_backend, people: dict,
+                               threshold: float, w_deep: float, w_hist: float, w_ratio: float,
+                               det_conf: float, frame_width: int,
+                               shared_state: SharedState) -> np.ndarray:
+    """Run YOLO + ReID on one BGR frame and return the annotated copy."""
+    h, w = img.shape[:2]
+    if w > frame_width:
+        scale = frame_width / w
+        img = cv2.resize(img, (frame_width, int(h * scale)))
+
+    if detector is not None and reid_backend is not None and people:
+        results = detector.predict(img, classes=[0], conf=det_conf, verbose=False)
+        boxes_raw = results[0].boxes
+
+        clean_boxes = []
+        for box in boxes_raw:
+            x1, y1, x2, y2 = box.xyxy[0].cpu().numpy().astype(int)
+            x1, y1 = max(x1, 0), max(y1, 0)
+            x2, y2 = min(x2, img.shape[1]), min(y2, img.shape[0])
+            if x2 - x1 < 10 or y2 - y1 < 20:
+                continue
+            clean_boxes.append((x1, y1, x2, y2))
+
+        if clean_boxes:
+            boxes_arr = np.array(clean_boxes, dtype=np.float32)
+            deep_feats = extract_deep_features(reid_backend, img, boxes_arr)
+            for (x1, y1, x2, y2), cur_deep in zip(clean_boxes, deep_feats):
+                crop = img[y1:y2, x1:x2]
+                cur_aux = extract_aux_features(crop)
+                best_name, best_score = match_against_watchlist(
+                    people, cur_deep, cur_aux, w_deep, w_hist, w_ratio
+                )
+                is_match = best_score >= threshold
+                if is_match:
+                    color = name_to_color(best_name)
+                    label = f"{best_name} {best_score:.2f}"
+                    shared_state.maybe_log(best_name, best_score)
+                else:
+                    color = (0, 0, 220)
+                    label = f"person {best_score:.2f}"
+                cv2.rectangle(img, (x1, y1), (x2, y2), color, 2)
+                cv2.putText(img, label, (x1, max(y1 - 10, 15)),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.55, color, 2)
+    elif detector is not None:
+        cv2.putText(img, "Add a person to the watchlist to start tracking", (10, 30),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 165, 255), 2)
+    return img
+
+
+# --------------------------------------------------------------------------
 # UI
 # --------------------------------------------------------------------------
 
@@ -264,8 +311,8 @@ st.set_page_config(page_title="Live Person Tracker", page_icon="🧍", layout="w
 st.title("🧍 Live Person Tracker")
 st.caption(
     "Add one or more named people to your watchlist — each from their own reference photo and "
-    "a manually selected box — then find any of them live in your webcam feed using whole-body "
-    "appearance. Works at a distance where faces aren't resolvable. Runs 100% on CPU."
+    "a manually selected box — then find any of them live in your webcam or IP camera feed using "
+    "whole-body appearance. Works at a distance where faces aren't resolvable. Runs 100% on CPU."
 )
 
 if "people" not in st.session_state:
@@ -275,6 +322,29 @@ if "form_version" not in st.session_state:
 
 with st.sidebar:
     st.header("Settings")
+
+    # ── Video source ──────────────────────────────────────────────────────
+    st.subheader("📹 Video Source")
+    source_mode = st.radio(
+        "Source type",
+        options=["Webcam (WebRTC)", "IP / RTSP Camera"],
+        index=0,
+        horizontal=False,
+        help="WebRTC streams directly from your browser. IP/RTSP connects to a network camera via OpenCV.",
+    )
+
+    if source_mode == "IP / RTSP Camera":
+        stream_url = st.text_input(
+            "Stream URL",
+            value="",
+            placeholder="rtsp://user:pass@192.168.1.10:554/stream  or  http://ip:port/video",
+        )
+        ip_run = st.toggle("▶️ Start IP stream", value=False, key="ip_run")
+
+    st.divider()
+
+    # ── Detection / matching settings ─────────────────────────────────────
+    st.subheader("⚙️ Settings")
     det_conf = st.slider("Detector confidence", 0.1, 0.9, 0.4, 0.05,
                           help="YOLO person-detection confidence threshold.")
     frame_width = st.select_slider("Frame width (processing)", options=[320, 480, 640, 800, 960], value=640)
@@ -326,8 +396,8 @@ with col1:
 
         default_x = (int(orig_w * 0.30), int(orig_w * 0.70))
         default_y = (int(orig_h * 0.10), int(orig_h * 0.95))
-        x1, x2 = st.slider("Left \u2194 right", 0, orig_w, default_x, key=f"box_x_{fv}")
-        y1, y2 = st.slider("Top \u2194 bottom", 0, orig_h, default_y, key=f"box_y_{fv}")
+        x1, x2 = st.slider("Left ↔ right", 0, orig_w, default_x, key=f"box_x_{fv}")
+        y1, y2 = st.slider("Top ↔ bottom", 0, orig_h, default_y, key=f"box_y_{fv}")
 
         preview = resized.copy()
         draw = ImageDraw.Draw(preview)
@@ -409,21 +479,90 @@ with col1:
     else:
         st.caption("No matches logged yet. Click 'Refresh log' to check for new detections.")
 
-with col2:
-    st.subheader("2. Live webcam feed")
-    ctx = webrtc_streamer(
-        key="person-match",
-        mode=WebRtcMode.SENDRECV,
-        rtc_configuration=RTCConfiguration({"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}),
-        video_processor_factory=lambda: PersonMatchProcessor(shared),
-        media_stream_constraints={"video": True, "audio": False},
-        async_processing=True,
-    )
+# --------------------------------------------------------------------------
+# Right column — live feed (Webcam via WebRTC  OR  IP/RTSP via OpenCV loop)
+# --------------------------------------------------------------------------
 
-    if ctx.state.playing:
-        fps_placeholder.metric("Live FPS", f"{shared.read_fps():.1f}")
+with col2:
+    if source_mode == "Webcam (WebRTC)":
+        st.subheader("2. Live webcam feed")
+        ctx = webrtc_streamer(
+            key="person-match",
+            mode=WebRtcMode.SENDRECV,
+            rtc_configuration=RTCConfiguration({"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}),
+            video_processor_factory=lambda: PersonMatchProcessor(shared),
+            media_stream_constraints={"video": True, "audio": False},
+            async_processing=True,
+        )
+
+        if ctx.state.playing:
+            fps_placeholder.metric("Live FPS", f"{shared.read_fps():.1f}")
+        else:
+            fps_placeholder.info("Click START above to begin the webcam feed.")
+
     else:
-        fps_placeholder.info("Click START above to begin the webcam feed.")
+        # ── IP / RTSP Camera mode ──────────────────────────────────────────
+        st.subheader("2. IP / RTSP Camera feed")
+
+        if "ip_cap" not in st.session_state:
+            st.session_state.ip_cap = None
+
+        frame_slot = st.empty()
+        fps_slot   = st.empty()
+
+        if ip_run:
+            url = stream_url.strip() if "stream_url" in dir() else ""
+            if not url:
+                st.warning("⚠️ Enter a stream URL in the sidebar first.")
+                st.stop()
+
+            if st.session_state.ip_cap is None:
+                cap = cv2.VideoCapture(url)
+                if not cap.isOpened():
+                    st.error(f"❌ Could not open stream: {url}")
+                    st.stop()
+                st.session_state.ip_cap = cap
+
+            cap = st.session_state.ip_cap
+            prev_t = time.time()
+            fps_smooth = 0.0
+            frame_idx = 0
+
+            (det_snap, reid_snap, people_snap, thresh_snap,
+             wd_snap, wh_snap, wr_snap, dc_snap, fw_snap, pe_snap) = shared.snapshot()
+
+            while st.session_state.get("ip_run", False):
+                ret, frame = cap.read()
+                if not ret:
+                    st.warning("⚠️ Failed to read frame from stream. Check the URL and network.")
+                    break
+
+                frame_idx += 1
+                if frame_idx % max(pe_snap, 1) == 0:
+                    annotated = process_frame_for_persons(
+                        frame.copy(), det_snap, reid_snap, people_snap,
+                        thresh_snap, wd_snap, wh_snap, wr_snap,
+                        dc_snap, fw_snap, shared
+                    )
+                    # refresh snapshot periodically so sidebar tweaks take effect
+                    if frame_idx % 30 == 0:
+                        (det_snap, reid_snap, people_snap, thresh_snap,
+                         wd_snap, wh_snap, wr_snap, dc_snap, fw_snap, pe_snap) = shared.snapshot()
+
+                now = time.time()
+                fps_smooth = 0.9 * fps_smooth + 0.1 * (1.0 / max(now - prev_t, 1e-6))
+                prev_t = now
+
+                rgb = cv2.cvtColor(annotated, cv2.COLOR_BGR2RGB)
+                frame_slot.image(rgb, channels="RGB", use_container_width=True)
+                fps_slot.caption(f"FPS: {fps_smooth:.1f}")
+                fps_placeholder.metric("Live FPS", f"{fps_smooth:.1f}")
+                time.sleep(0.01)
+        else:
+            if st.session_state.ip_cap is not None:
+                st.session_state.ip_cap.release()
+                st.session_state.ip_cap = None
+            frame_slot.info("Stream stopped. Toggle '▶️ Start IP stream' in the sidebar to begin.")
 
 st.divider()
 with st.expander("Tips & limitations"):
@@ -436,18 +575,13 @@ with st.expander("Tips & limitations"):
   the box is drawn red and labeled generically as "person".
 - **Each name gets a stable, distinct color** in both the watchlist panel and the live overlay,
   so multiple simultaneous matches are easy to tell apart at a glance.
-- **This is still short/medium-term, same-outfit re-identification** — not face recognition. Every
-  public person-reID model (including OSNet) is trained assuming the person doesn't change clothes;
-  if they do, or lighting shifts drastically, similarity will drop.
-- **Distance**: detection (YOLO finding a person at all) is still the bottleneck at very long
-  range. Raise `frame_width` / use a closer camera if you're missing distant detections.
-- **Speed vs. accuracy**: matching against more people barely costs anything extra — the OSNet
-  forward pass is already batched once per frame regardless of watchlist size; only cheap dot
-  products scale with the number of names. Raise "Run detection every N frames" and lower frame
-  width for more FPS if needed.
-- **Detection log**: matches are logged per-person with a short cooldown to avoid spam; click
-  "Refresh log" to pull the latest entries (the video overlay itself updates live; the log table
-  needs a manual refresh since it lives in a background thread).
+- **IP / RTSP Camera**: enter the full stream URL (e.g. `rtsp://admin:pass@192.168.1.10:554/stream`
+  or `http://192.168.1.10:8080/video`) and toggle **Start IP stream** in the sidebar. OpenCV
+  reads the stream directly; no browser WebRTC relay is needed.
+- **This is still short/medium-term, same-outfit re-identification** — not face recognition.
+- **Distance**: detection (YOLO finding a person at all) is still the bottleneck at very long range.
+- **Speed vs. accuracy**: raise "Run detection every N frames" and lower frame width for more FPS.
+- **Detection log**: click "Refresh log" to pull the latest entries.
 - Everything runs locally — no images or video leave your machine.
         """
     )
