@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+*.mlpackage/
+models/yolo11n.pt
+models/yolov8x.pt
+.DS_Store
+.idea/
+.vscode/
+.streamlit/
