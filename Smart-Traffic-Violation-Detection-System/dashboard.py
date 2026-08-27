@@ -48,7 +48,7 @@ def get_shared_state() -> dict:
 
 
 # ── Inference worker ──────────────────────────────────────────────────────────
-def _inference_worker(cam_idx: int, conf: float, state: dict) -> None:
+def _inference_worker(video_source: int | str, conf: float, state: dict) -> None:
     lock = state["lock"]
 
     try:
@@ -60,10 +60,10 @@ def _inference_worker(cam_idx: int, conf: float, state: dict) -> None:
             state["running"] = False
         return
 
-    cap = cv2.VideoCapture(cam_idx)
+    cap = cv2.VideoCapture(video_source)
     if not cap.isOpened():
         with lock:
-            state["error"]   = f"Cannot open camera {cam_idx}"
+            state["error"]   = f"Cannot open camera {video_source}"
             state["running"] = False
         return
 
@@ -189,7 +189,13 @@ def main() -> None:
         st.markdown("## 🚦 Argus")
         st.caption("Smart Traffic Violation Detection")
         st.divider()
-        cam_idx  = st.number_input("Camera Index", 0, 10, 0)
+        source_mode = st.radio("Source", ["Webcam", "IP / RTSP Camera"])
+        if source_mode == "Webcam":
+            cam_idx = st.number_input("Camera Index", 0, 10, 0)
+            video_source = int(cam_idx)
+        else:
+            video_source = st.text_input("Stream URL", value="rtsp://", help="Enter an RTSP or HTTP stream URL from your IP camera.")
+            
         conf_val = st.slider("Confidence", 0.10, 0.80, 0.28, 0.02)
         st.divider()
 
@@ -215,7 +221,7 @@ def main() -> None:
                     state["error"]      = None
                 t = threading.Thread(
                     target=_inference_worker,
-                    args=(int(cam_idx), float(conf_val), state),
+                    args=(video_source, float(conf_val), state),
                     daemon=True,
                 )
                 t.start()

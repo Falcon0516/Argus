@@ -29,15 +29,15 @@ WINDOW_TITLE = "Argus — Traffic Violation Detection  [q] quit"
 INFER_SIZE   = 640
 
 
-def run(cam_index: int = 0, conf: float = 0.28) -> None:
+def run(cam_index: int | str = 0, conf: float = 0.28) -> None:
     detector = ArgusDetector(conf=conf)
     engine   = ViolationEngine()
 
     cap = cv2.VideoCapture(cam_index)
     if not cap.isOpened():
-        log.error("Cannot open camera %d", cam_index)
+        log.error("Cannot open camera %s", str(cam_index))
         sys.exit(1)
-    log.info("Camera %d opened (%dx%d)", cam_index,
+    log.info("Camera %s opened (%dx%d)", str(cam_index),
              int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)),
              int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
 
@@ -135,11 +135,12 @@ def run(cam_index: int = 0, conf: float = 0.28) -> None:
 
 def parse_args():
     p = argparse.ArgumentParser(description="Argus live webcam")
-    p.add_argument("--cam",  type=int,   default=0)
+    p.add_argument("--cam",  type=str,   default="0", help="Camera index (e.g. 0) or RTSP/HTTP URL")
     p.add_argument("--conf", type=float, default=0.28)
     return p.parse_args()
 
 
 if __name__ == "__main__":
     args = parse_args()
-    run(cam_index=args.cam, conf=args.conf)
+    cam_val = int(args.cam) if args.cam.isdigit() else args.cam
+    run(cam_index=cam_val, conf=args.conf)
