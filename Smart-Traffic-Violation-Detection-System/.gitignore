@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.Python
+
+# Virtual environment (3GB — don't push)
+.venv/
+
+# CoreML packages (binary, large — regenerate with convert_to_coreml.py)
+*.mlpackage/
+
+# PyTorch model weights (large binaries — download separately)
+models/yolo11n.pt
+models/helmetdetectionmodel.pt
+models/seatbeltmodel.pt
+license_plate_detector.pt
+
+# macOS
+.DS_Store
+*.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Streamlit
+.streamlit/
+
+# Jupyter
+*.ipynb_checkpoints/
