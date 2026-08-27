@@ -1,0 +1,452 @@
+[
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 1.708,
+        "confidence": 0.747,
+        "timestamp": "2026-08-27 23:55:26",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 0.361,
+        "confidence": 0.452,
+        "timestamp": "2026-08-27 23:55:26",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 2.647,
+        "confidence": 0.381,
+        "timestamp": "2026-08-27 23:55:26",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 3.816,
+        "confidence": 0.851,
+        "timestamp": "2026-08-27 23:55:26",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 0.628,
+        "confidence": 0.639,
+        "timestamp": "2026-08-27 23:55:26",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 3.218,
+        "confidence": 0.605,
+        "timestamp": "2026-08-27 23:55:26",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 0.839,
+        "confidence": 0.775,
+        "timestamp": "2026-08-27 23:55:27",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 4.239,
+        "confidence": 0.693,
+        "timestamp": "2026-08-27 23:55:27",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 0.484,
+        "confidence": 0.556,
+        "timestamp": "2026-08-27 23:55:27",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 1.433,
+        "confidence": 0.83,
+        "timestamp": "2026-08-27 23:55:27",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 0.729,
+        "confidence": 0.516,
+        "timestamp": "2026-08-27 23:55:27",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 5.942,
+        "confidence": 0.409,
+        "timestamp": "2026-08-27 23:55:27",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 1.552,
+        "confidence": 0.807,
+        "timestamp": "2026-08-27 23:55:27",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 1.192,
+        "confidence": 0.747,
+        "timestamp": "2026-08-27 23:55:27",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 5.487,
+        "confidence": 0.661,
+        "timestamp": "2026-08-27 23:55:27",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 2.495,
+        "confidence": 0.535,
+        "timestamp": "2026-08-27 23:55:27",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 1.319,
+        "confidence": 0.405,
+        "timestamp": "2026-08-27 23:55:27",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 2.041,
+        "confidence": 0.572,
+        "timestamp": "2026-08-27 23:55:27",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 1.172,
+        "confidence": 0.792,
+        "timestamp": "2026-08-27 23:55:27",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 2.137,
+        "confidence": 0.851,
+        "timestamp": "2026-08-27 23:55:27",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 1.063,
+        "confidence": 0.772,
+        "timestamp": "2026-08-27 23:55:27",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 1.415,
+        "confidence": 0.405,
+        "timestamp": "2026-08-27 23:55:27",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 2.445,
+        "confidence": 0.626,
+        "timestamp": "2026-08-27 23:55:28",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 3.651,
+        "confidence": 0.814,
+        "timestamp": "2026-08-27 23:55:28",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 0.632,
+        "confidence": 0.763,
+        "timestamp": "2026-08-27 23:55:28",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 0.881,
+        "confidence": 0.427,
+        "timestamp": "2026-08-27 23:55:28",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 0.412,
+        "confidence": 0.483,
+        "timestamp": "2026-08-27 23:55:28",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 0.69,
+        "confidence": 0.566,
+        "timestamp": "2026-08-27 23:55:28",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 2.567,
+        "confidence": 0.685,
+        "timestamp": "2026-08-27 23:55:28",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 1.665,
+        "confidence": 0.672,
+        "timestamp": "2026-08-27 23:55:28",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 0.905,
+        "confidence": 0.587,
+        "timestamp": "2026-08-27 23:55:28",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 0.309,
+        "confidence": 0.456,
+        "timestamp": "2026-08-27 23:55:28",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 0.458,
+        "confidence": 0.592,
+        "timestamp": "2026-08-27 23:55:29",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 7.707,
+        "confidence": 0.798,
+        "timestamp": "2026-08-27 23:55:29",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 0.654,
+        "confidence": 0.667,
+        "timestamp": "2026-08-27 23:55:29",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 2.062,
+        "confidence": 0.848,
+        "timestamp": "2026-08-27 23:55:29",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 1.14,
+        "confidence": 0.813,
+        "timestamp": "2026-08-27 23:55:29",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 1.174,
+        "confidence": 0.81,
+        "timestamp": "2026-08-27 23:55:29",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 6.41,
+        "confidence": 0.379,
+        "timestamp": "2026-08-27 23:55:29",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 1.904,
+        "confidence": 0.836,
+        "timestamp": "2026-08-27 23:55:29",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 5.688,
+        "confidence": 0.7,
+        "timestamp": "2026-08-27 23:55:29",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 4.118,
+        "confidence": 0.88,
+        "timestamp": "2026-08-27 23:55:29",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 7.129,
+        "confidence": 0.719,
+        "timestamp": "2026-08-27 23:55:30",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 9.458,
+        "confidence": 0.656,
+        "timestamp": "2026-08-27 23:55:30",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    },
+    {
+        "damage_type": "pothole",
+        "severity": "Severe",
+        "area_m2": 10.773,
+        "confidence": 0.388,
+        "timestamp": "2026-08-27 23:55:30",
+        "camera_id": "PATROL_UNIT_04",
+        "gps_lat": 12.9716,
+        "gps_lon": 77.5946
+    }
+]
