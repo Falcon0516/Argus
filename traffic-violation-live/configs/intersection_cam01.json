@@ -1,0 +1,24 @@
+{
+    "camera_id": "JUNCTION_CAM_01",
+    "stop_line": {
+        "pt1": [
+            100,
+            450
+        ],
+        "pt2": [
+            1180,
+            450
+        ]
+    },
+    "traffic_light_roi": [
+        50,
+        50,
+        150,
+        200
+    ],
+    "lane_direction": {
+        "allowed_angle_deg": 90.0,
+        "angle_tolerance_deg": 45.0,
+        "min_displacement_px": 25
+    }
+}
