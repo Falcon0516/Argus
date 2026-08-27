@@ -1,0 +1,7 @@
+{
+  "model_path": "yolov8s.pt",
+  "confidence": 0.45,
+  "grid": { "rows": 3, "cols": 3 },
+  "thresholds": { "low": 3, "medium": 6, "high": 10 },
+  "log_dir": "logs"
+}

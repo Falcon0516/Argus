@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+venv/
+.env
+
+# Logs
+logs/
+
+# Model weights (large binary)
+*.pt
+
+# OS
+Thumbs.db
+.DS_Store
