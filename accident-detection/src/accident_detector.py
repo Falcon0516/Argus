@@ -30,8 +30,8 @@ class AccidentDetector:
         self.model = YOLO(model_path)
         self.conf = conf
         self.speed_threshold = 5.0
-        self.prolonged_collision_frames = 15
-        self.min_collision_distance = 50
+        self.prolonged_collision_frames = 4
+        self.min_collision_distance = 80
         
         # Keep track of prolonged collisions across frames
         self.prolonged_collision_count = 0
@@ -56,9 +56,14 @@ class AccidentDetector:
             valid_boxes = []
             for i, box in enumerate(boxes):
                 cls_id = int(classes[i])
-                if cls_id in vehicle_classes:
+                x1, y1, x2, y2 = map(int, box[:4])
+                
+                # Draw ALL boxes in gray to debug what YOLO sees
+                if cls_id not in vehicle_classes:
+                    cv2.rectangle(annotated, (x1, y1), (x2, y2), (150, 150, 150), 1)
+                    cv2.putText(annotated, f"cls:{cls_id}", (x1, y1-5), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (150,150,150), 1)
+                else:
                     valid_boxes.append(box)
-                    x1, y1, x2, y2 = map(int, box[:4])
                     cv2.rectangle(annotated, (x1, y1), (x2, y2), (0, 255, 0), 2)
             
             collision_detected = False
@@ -68,7 +73,7 @@ class AccidentDetector:
                     box2 = valid_boxes[j]
                     
                     iou = calculate_iou(box1, box2)
-                    if iou > 0.15:
+                    if iou > 0.05:  # Lowered from 0.15
                         collision_detected = True
                     
                     dist = ((box1[0] - box2[0]) ** 2 + (box1[1] - box2[1]) ** 2) ** 0.5
